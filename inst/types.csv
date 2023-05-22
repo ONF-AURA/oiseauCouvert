@@ -1,0 +1,21 @@
+cat;strate0;strate1;origine;type;col;col_txt;description;détermination;renouv;futaie;futaie_fill_renouv;renouv_fill_futaie;flux_rege;flux_perche;flux_futaie
+1;futaie;rege;accroissement;ouvert;yellow;black;Zone ouverte autrefois recouverte par des futaies;REGE1 ET FUTAIE0;1;;;91;1;0;-1
+2;perchis;rege;accroissement;relevé de couvert;gold;black;Zone ouverte autrefois recouverte par des perches;REGE1 ET PERCHE0;;;;91;1;-1;0
+3;rege;rege;stock;non régénéré;pink;white;Zone déjà ouverte ne se refermant pas;REGE1 ET (REGE0 OU ACC_REGE_FAIBLE);2;;;91;0;0;0
+4;rege;perchis;accroissement;régénéré;red;white;Zone ouverte en cours de fermeture par les accrus;REGE0 ET PERCHE1 ET NORMAL;3;;;91;-1;1;0
+5;rege;perchis;recouvrement;perchis recouvre régé;skyblue;white;Zone ouverte en cours de fermeture par l'extension des perches voisines;REGE0 ET PERCHE1 ET ANORMAL;4;;;;-1;2;0
+6;rege;futaie;recouvrement;futaie recouvre régé;dodgerblue;white;Zone ouverte en cours de fermeture par l'extension des futaies voisines;REGE0 ET FUTAIE1;5;;;;-1;0;2
+10;;perchis;;perchis;palegreen;black;Perchis;PERCHE0 ET PERCHE1;10;;;;0;0;0
+11;perchis;perchis;stock;perchis peu vigoureux;orchid;black;Perchis à croissance faible;PERCHE0 ET PERCHE1 ET ACC_PERCHE_FAIBLE ET HOUPPIER_PERCHE_ETROIT;;11;10;;0;0;0
+12;perchis;perchis;stock;perchis vigoureux;darkorchid;black;Perchis à croissance soutenue;PERCHE0 ET PERCHE1 ET ACC_PERCHE_FORT;;12;10;;0;0;0
+14;perchis;futaie;recouvrement;futaie recouvre perchis;blue;white;Perchis en cours d'étouffement par la futaie;PERCHE0 ET FUTAIE1 ET ANORMAL;14;;20;;0;-1;2
+17;perchis;perchis;stock;ppts peu productifs;orange;black;Peuplement peu vigoureux;PERCHE0 ET PERCHE1 ET ACC_PERCHE_FAIBLE ET HOUPPIER_PERCHE_LARGE;;18;10;;0;0;0
+18;futaie;perchis;accroissement;récolte sur perchis;magenta;black;Zone où un perchis est mis en lumière;FUTAIE0 ET PERCHE1;7;;10;;0;1;-1
+19;perchis;futaie;accroissement;passage futaie;springgreen;black;Perchis accédant au stade de futaie;PERCHE0 ET FUTAIE1;19;19;20;;0;-1;1
+20;;futaie;;futaie;darkgreen;white;Futaie;FUTAIE0 ET FUTAIE1;20;;;;0;0;0
+21;futaie;futaie;stock;futaie en croissance lente;forestgreen;white;Futaie à croissance faible;FUTAIE0 ET FUTAIE1 ET ACC_FUTAIE_FAIBLE ET H1>H0;;21;20;;0;0;0
+22;futaie;futaie;stock;futaie en croissance rapide;darkgreen;white;Futaie à croissance soutenue;FUTAIE0 ET FUTAIE1 ET ACC_FUTAIE_FORT ET H1>H0;;22;20;;0;0;0
+29;futaie;futaie;stock;Récolte;saddlebrown;white;Récolte sans ouverture;FUTAIE0 ET FUTAIE1 ET H1<H0;;29;20;;0;0;0
+90;;perchis;;non précomptable;linen;black;Hors futaie;H1 < LIM_H_PERCHE;;;;;;;
+91;;rege;;stade régénération;linen;black;Peuplements bas;H1 < LIM_H_PERCHE;;91;;;;;
+99;autre;autre;;autres;gray;black;Surface non boisée;H0 = H1 = 0 OU MASQUE ROUTE;99;99;;;;;
