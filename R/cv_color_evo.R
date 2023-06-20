@@ -8,7 +8,7 @@
 #' @export
 #'
 
-cv_color_evo <- function(r, plot = TRUE, shp = NULL){
+cv.color_evo <- function(r, plot = TRUE, shp = NULL){
   r <- terra::as.factor(r)
 
   cats <- cv_types_evo() %>% dplyr::select(cat, description, col) %>%

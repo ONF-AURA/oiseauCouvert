@@ -8,6 +8,10 @@
 #'
 cv_evolution <- function(.dir = get(".dir", pos = 1), force_recalc = FALSE){
 
+  oiseauData::data_check("shp","buffer","path_mns","dir_ta_lidarhd","dos_laz","dos_mns","path_mnt","path_mnh1",
+                         "path_mnh","path_mnh0","path_evo_futaie","path_evo_futaie100","path_evo_renouv","path_evo_renouv100",
+                         "an0","an1","path_evo_futaie")
+
   tryCatch(.dir, error = function(e){stop(
     crayon::red("ERREUR: "), "Aucun projet n'est chargé.\n",
     "Pour charger un projet:",
@@ -24,6 +28,8 @@ cv_evolution <- function(.dir = get(".dir", pos = 1), force_recalc = FALSE){
 
     dc("desserte", set = oiseauIGN::ign_get_desserte(dc("shp"), buffer = dc("buffer")))
   }
+
+
 
   # mns lidarHD
 
@@ -53,14 +59,16 @@ cv_evolution <- function(.dir = get(".dir", pos = 1), force_recalc = FALSE){
     mnh0 <- terra::resample(mnh0all, mnh1)
     terra::writeRaster(mnh0, dc("path_mnh0"), overwrite = TRUE)
 
+
+
     message("Evolution du couvert...")
 
     cv_carto_evo_frt(force_recalc = T)
 
-    evo_futaie <- cv_color_evo(terra::rast(dc("path_evo_futaie")), plot = TRUE, shp = dc("shp"))
-    evo_futaie_100 <- cv_color_evo(terra::rast(dc("path_evo_futaie100")))
-    evo_renouv <- cv_color_evo(terra::rast(dc("path_evo_renouv")), plot = TRUE, shp = dc("shp"))
-    evo_renouv_100 <- cv_color_evo(terra::rast(dc("path_evo_renouv100")))
+    evo_futaie <- cv.color_evo(terra::rast(dc("path_evo_futaie")), plot = TRUE, shp = dc("shp"))
+    evo_futaie_100 <- cv.color_evo(terra::rast(dc("path_evo_futaie100")))
+    evo_renouv <- cv.color_evo(terra::rast(dc("path_evo_renouv")), plot = TRUE, shp = dc("shp"))
+    evo_renouv_100 <- cv.color_evo(terra::rast(dc("path_evo_renouv100")))
 
     # Emprises EDF
 

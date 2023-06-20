@@ -1,30 +1,44 @@
 #' Fonction V = f(mnh)
 #'
 #' @param fh FH
+#' @param an année MNH utilisée
+#' @param path_dendro chemin rasters dendrométriques
+#' @param path_mnh chemin raster mnh (série temporelle)
 #'
 #' @return fonction
 #' @export
 #'
-cv_fct_volume <- function(fh = 10){
+cv.fct_volume <- function(
+    an,
+    path_dendro = oiseauData::data_conf("path_dendro"),
+    path_mnh = oiseauData::data_conf("path_mnh_ts"),
+    fh = 10){
 
-  st <- dc("path_st") %>% terra::rast()
-  mnh0 <- terra::rast(dc("path_mnh0"))
+  # oiseauData::data_check("path_dendro", "path_mnh0")
+
+  st <- dc("path_dendro") %>% terra::rast()
+  mnh0 <- terra::rast(path_mnh) %>% terra::subset(as.character(an))
 
   terra::crs(st) <- terra::crs(mnh0) <- "+init=epsg:2154"
   cv26 <- terra::aggregate(mnh0, 26, fun = function(x) sd(x)) %>%
     terra::resample(st$g)
 
   mnh26 <- terra::resample(mnh0, st$g)
+  names(mnh26) <- "h"
   cv26 <- terra::resample(mnh0^2, st$g)
+  names(cv26) <- "h2"
+
   cv263 <- terra::resample(mnh0^3, st$g)
-  df <- c(mnh26, cv26, cv263, st$g) %>% terra::as.data.frame()
+  names(cv263) <- "h3"
+
+  df <- c(mnh26, cv26, cv263, g = st$g) %>% terra::as.data.frame()
   head(df)
 
-  glm(g~MNH, data = df)
-  glm(g~MNH+MNH.1, data = df)
-  glm(g~MNH+MNH.1+MNH.2, data = df)
+  glm(g~h, data = df)
+  glm(g~h+h2, data = df)
+  glm(g~h+h2+h3, data = df)
 
-  lm <- glm(g~MNH, data = df)
+  lm <- glm(g~h, data = df)
 
   function(h){
     v <- fh * (lm$coefficients[1] + lm$coefficients[2] * h)

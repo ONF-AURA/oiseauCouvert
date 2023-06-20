@@ -1,28 +1,63 @@
 #' Identification des trouées à suivre
 #'
-#' @param conf conf
 #' @param min_size surface mini de la trouée en ares
+#' @param txOuv taux d'ouverture au-dessus duquel le peuplement est concidéré comme trouée
 #'
-#' @return conf
+#' @return raster écrit sous "dest_trouees_suivies"
 #' @export
 #'
 
-cv_trouees <- function(min_size = 3){
+cv_trouees <- function(min_size = oiseauData::data_conf("min_size_trouees"),
+                       txOuv = oiseauData::data_conf("tx_ouv_trouees"),
+                       path_evo_renouv = oiseauData::data_conf("path_evo_renouv"),
+                       path_mnh_mask_ts= oiseauData::data_conf("path_mnh_mask_ts"),
+                       dest_trouees_suivies = oiseauData::data_conf("dest_trouees_suivies"),
+                       an0 = oiseauData::data_conf("an0")
+                       ){
 
+
+
+  # oiseauData::data_check("min_size_trouees","tx_ouv_trouees","path_evo_renouv","path_mnh_mask_ts","shp","dest_trouees_suivies")
+
+  # raster zones en strate régé avec année
+
+  tr = terra::rast(path_evo_renouv)
+  ans = terra::rast(path_mnh_mask_ts)
+  terra::crs(tr) <- terra::crs(ans) <- "epsg:2154"
+  evo <- tr %>% terra::resample(ans)
+  data <- c(evo, ans)
+  names(data)[1] <- "evo"
 
   types <- oiseauCouvert::cv_types_evo()
 
-  renouv <- terra::rast(dc("path_evo_renouv"))
+  types_ouv <- types %>% dplyr::filter(strate1 == "rege" & strate0 != "rege")
 
-  trouees <- renouv
+  ouv <- evo
+  ouv[!ouv %in% types_ouv$cat] <- NA
+  ouv[ouv %in% types_ouv$cat] <- an0
+
+  for(a in names(data)[-1]){
+    oa <- data[[a]]
+    an <- stringr::str_remove_all(a, "an_") %>% as.numeric()
+    ouv[oa == 0] <- an
+  }
+
+  names(ouv) <- "an"
+  terra::plot(ouv)
+  terra::plot(dc("shp") %>% as("SpatVector"), add=T)
+
+  # trouées = zones suffisamment ouvertes
+
+  trouees <- ouv
+  trouees[!is.na(trouees)] <- 1
   trouees[is.na(trouees)] <- 0
-  terra::values(trouees) <- (terra::values(renouv) %>% as.numeric() %in%
-                               (types %>% dplyr::filter(strate1 == "rege") %>% dplyr::pull(cat)))
   trouees <- terra::mask(trouees, dc("shp") %>% as("SpatVector"))
 
-  trouees10 <- terra::aggregate(trouees, 10, na.rm = TRUE)
-  trouees10[trouees10 < .5] <- NA
+  trouees10 <- terra::focal(trouees, 9, fun = "mean")
+  trouees10[trouees10 < txCv] <- NA
   trouees10[!is.na(trouees10)] <- 1
+
+  # filter taille mini
 
   trouees_id_all <- terra::patches(trouees10)
   size <- terra::as.data.frame(trouees_id_all) %>%
@@ -32,39 +67,47 @@ cv_trouees <- function(min_size = 3){
 
 
   trouees_id <- trouees_id_all
-  trouees_id[!  terra::values(trouees_id) %in% size$id] <- NA
-  trouees_id <- terra::patches(trouees_id)
+  terra::values(trouees_id)[,1][! terra::values(trouees_id)[,1] %in% size$id] <- NA
+  # trouees_id <- terra::patches(trouees_id)
 
-  dc("path_trouees_suivies", set =file.path(dc("dos_projet"), "troueees_suivies.tif"))
+  trouees_size <- terra::classify(trouees_id, size)
 
-  terra::writeRaster(trouees_id, dc("path_trouees_suivies"), overwrite = TRUE)
+  # année ouverture
+
+  trouees_dates <- terra::mask(ouv, trouees_id)
+
+  trouees_suivies <- c(trouees_id, trouees_size, trouee)
+
+  terra::writeRaster(trouees_id, dest_trouees_suivies, overwrite = TRUE)
 
   # insolation des trouées
 
-  ensol_raster <- rast(conf$path_insol_rege1_10)
+  oiseauLidar::cv_insolation()
+
+  ensol_raster <- terra::rast(conf$path_insol_rege1_10)
 
   df <- as.data.frame(c(trouees_id,
                         ensol_raster))
   names(df) <- c("id", "enso")
 
-  df <- df %>% mutate(id = as.character(id))
+  df <- df %>% dplyr::mutate(id = as.character(id))
 
   dfs <- df %>%
-    group_by(id) %>% summarise(surface = n()/100) %>%
-    arrange(surface) %>%
-    mutate(num = as.factor(1:nrow(.)))
+    dplyr::group_by(id) %>% dplyr::summarise(surface = n()/100) %>%
+    dplyr::arrange(surface) %>%
+    dplyr::mutate(num = as.factor(1:nrow(.)))
 
-  df <- df %>% left_join(
+  df <- df %>% dplyr::left_join(
     dfs %>% dplyr::select(id, num)
   )
   scale <- quantile(df$enso, .99) / max(dfs$surface)
 
-  ggplot()+
-    geom_col(data = dfs,
-             aes(y = surface * scale, x = num), fill = "gray") +
-    geom_boxplot(data = df, aes(y = enso, x = num), outlier.alpha = 0) +
-    scale_y_continuous(sec.axis = sec_axis(~./scale, name="surface (ha)")) +
-    scale_x_discrete(labels = dfs$id)+
+  ggplot2::ggplot()+
+    ggplot2::geom_col(data = dfs,
+                      ggplot2::aes(y = surface * scale, x = num), fill = "gray") +
+    ggplot2::geom_boxplot(data = df, ggplot2::aes(y = enso, x = num), outlier.alpha = 0) +
+    ggplot2::scale_y_continuous(sec.axis = ggplot2::sec_axis(~./scale, name="surface (ha)")) +
+    ggplot2::scale_x_discrete(labels = dfs$id)+
     ggplot2::ylab("Insolation")
 
   # carte insol trouées

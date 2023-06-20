@@ -2,26 +2,40 @@
 #'
 #'
 #'
-#' @return table écrite dans conf$tab_volumes_ans
+#' @return table
 #' @export
 #'
-cv_volume_ans <- function(){
+cv_volume_ans <- function(shp = oiseauData::data_conf("shp"),
+                          path_mnh = oiseauData::data_conf("path_mnh_ts"),
+                          path_mnh_mask_ts = oiseauData::data_conf("path_mnh_mask_ts"),
+                          path_emprise_edf.fac = oiseauData::data_conf("path_emprise_edf")
+                          ){
+
+
+  mnh <- terra::rast(path_mnh)
 
   # emprise EDF
-  msk_edf <- terra::rast(dc("path_emprise_edf"))
+  msk_edf <- tryCatch(terra::rast(path_emprise_edf.fac),
+                      error = function(e){r <- mnh[[1]]; terra::values(r) <- NA; r})
 
-  mnh1 <- terra::rast(dc("path_mnh1")) %>% terra::mask(msk_edf, inverse = TRUE)
-  names(mnh1) <- "h1"
 
-  mnh_mask <- terra::rast(dc("path_mnh_mask_ts"))
+  mnh_mask <- tryCatch(terra::rast(path_mnh_mask_ts),
+                       error = function(e){r <- mnh; terra::values(r) <- NA; r})
 
-  terra::crs(mnh1) <- terra::crs(mnh_mask) <- "+init=epsg:2154"
+  mnh <- mnh %>% terra::mask(msk_edf, inverse = TRUE)
 
-  mnh1 <- mnh1 %>% terra::resample(mnh_mask)
+
+
+
+
+
+  terra::crs(mnh) <- terra::crs(mnh_mask) <- "+init=epsg:2154"
+
+  mnh <- mnh %>% terra::resample(mnh_mask)
 
 
   mnh_prel <- purrr::map(1:length(names(mnh_mask)),
-                         ~ mnh1 %>% terra::mask(mnh_mask %>% terra::subset(.x) %>%
+                         ~ mnh[[.x]] %>% terra::mask(mnh_mask %>% terra::subset(.x) %>%
                                                   terra::classify(cbind(1, NA)))
   )
   mnh_prel[[1]] %>% terra::plot()
@@ -47,7 +61,7 @@ cv_volume_ans <- function(){
     data_id[[stringr::str_replace_all(col, "an_", "vol_")]] <- data_id[[col]] * data_id$surf
   }
 
-  r <- data_id %>% dplyr::select(!dplyr::starts_with("an_"))
+  data_id %>% dplyr::select(!dplyr::starts_with("an_"))
 
-  dc("tab_volumes_ans", set = r)
+  oiseauData::data_conf("tab_volumes_ans", set = r, replace = TRUE)
 }

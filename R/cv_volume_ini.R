@@ -7,22 +7,33 @@
 #' @return table écrite dans conf$tab_volumes_ini
 #' @export
 #'
-cv_volume_ini <- function(leaflet = FALSE){
+cv_volume_ini <- function(shp = oiseauData::data_conf("shp"),
+                          an0 = oiseauData::data_conf("an0"),
+                          an1 = oiseauData::data_conf("an1"),
+                          path_mnh = oiseauData::data_conf("path_mnh_ts"),
+                          path_emprise_edf.fac = oiseauData::data_conf("path_emprise_edf"),
+                          leaflet.fac = FALSE){
+
+  # oiseauData::data_check("path_emprise_edf","path_mnh0","path_mnh1","shp")
 
   # emprise EDF
-  msk_edf <- terra::rast(dc("path_emprise_edf"))
+  msk_edf <- tryCatch(terra::rast(path_emprise_edf.fac),
+                      error = function(e){NULL})
 
-  mnh0 <- terra::rast(dc("path_mnh0")) %>% terra::mask(msk_edf, inverse = TRUE)
-  mnh1 <- terra::rast(dc("path_mnh1")) %>% terra::mask(msk_edf, inverse = TRUE)
+  mnh <- terra::rast(path_mnh)
+
+  if(!is.null(msk_edf)) mnh <- mnh %>% terra::mask(msk_edf, inverse = TRUE)
+
+  mnh0 <- mnh[[as.character(an0)]]
+  mnh1 <- mnh[[as.character(an1)]]
   names(mnh0) <- "h0"
   names(mnh1) <- "h1"
-
   mnh0_d <- mnh0 %>% terra::clamp(8,50, values = FALSE)
   mnh1_d <- mnh1 %>% terra::clamp(0,50, values = TRUE)
 
 
   diff <- mnh1_d - mnh0_d
-  r_diff <- diff %>% oiseauSpot::spot_spat2rast()
+  r_diff <- diff %>% oiseauUtil::util_spat2rast()
 
   disp <- diff %>% terra::clamp(upper = -1, values = FALSE)
 
@@ -42,10 +53,10 @@ cv_volume_ini <- function(leaflet = FALSE){
   # volumes par parcelle
 
 
-  id <- dc("shp") %>% as("SpatVector") %>% terra::rasterize(disp, "id")
+  id <- shp %>% as("SpatVector") %>% terra::rasterize(disp, "id")
 
 
-  fun_vol <- cv_fct_volume()
+  fun_vol <- cv.fct_volume(an0)
 
   tab0 <- c(
     mnh0 %>% terra::clamp(lower = 8, values = FALSE),
@@ -67,11 +78,11 @@ cv_volume_ini <- function(leaflet = FALSE){
                      v0 = mean(v0),
                      v1 = mean(v1),
                      Vrec = vrec.ha * surf) %>%
-    dplyr::mutate(vacc = (v1 - v0 + vrec.ha) / (dc("an1") - dc("an0")))
+    dplyr::mutate(vacc = (v1 - v0 + vrec.ha) / (an1-an0))
 
-  dc("tab_volumes_ini", set = tab)
+  oiseauData::data_conf("tab_volumes_ini", set = tab, replace = TRUE)
 
-  if(leaflet){
+  if(leaflet.fac){
 
     pal <- leaflet::colorNumeric("Greys", domain = 8:50)
 

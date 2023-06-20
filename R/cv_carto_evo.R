@@ -15,21 +15,22 @@
 #' @param desserte sf des dessertes avec champ 'largeur'
 #' @param champ_id champ d'identifiant unique de shp,
 #' @param seuil_dtpi différence de TPI au-delà duquel le pixel est considéré comme en fermeture latérale du couvert
+#' @param dos_dest dossier d'écriture des tifs
 #'
 #' @return liste: raster et table
 #' @export
 #'
-cv_carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
-         lim_h_rege = 3, lim_h_perche = 15,
-         lim_dh_rege = 0.2, lim_dh_perche = 0.5, lim_dh_futaie = 0.3,
-         max_acc = 1,
-         max_area_perche = 30,
-         seuil_dtpi = 2,
-         desserte = NULL,
-         champ_id,
-         dos_projet){
+cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
+                         lim_h_rege = 3, lim_h_perche = 15,
+                         lim_dh_rege = 0.2, lim_dh_perche = 0.5, lim_dh_futaie = 0.3,
+                         max_acc = 1,
+                         max_area_perche = 30,
+                         seuil_dtpi = 2,
+                         desserte = NULL,
+                         champ_id,
+                         dos_dest){
 
-print(paste("seuil_dtpi = ", seuil_dtpi))
+  print(paste("seuil_dtpi = ", seuil_dtpi))
   h.temp <- terra::crop(mnh0, as(shp_ug, "SpatVector"))
 
   msk <- terra::rasterize(as(shp_ug, "SpatVector"), h.temp)
@@ -168,7 +169,7 @@ print(paste("seuil_dtpi = ", seuil_dtpi))
 
   print("2.houppiers")
 
-  ttops1 <- cv_apex(h1, lim_h_rege)
+  ttops1 <- cv.apex(h1, lim_h_rege)
 
 
   # suppression des pixels de recouvrements (leur hauteur biaise la moyenne)
@@ -205,7 +206,7 @@ print(paste("seuil_dtpi = ", seuil_dtpi))
   # véritables houppiers avec valeur des houppiers tronqués
 
   h1r <- h1
-  h1r <- util_spat2rast(h1)
+  h1r <- oiseauUtil::util_spat2rast(h1)
   raster::crs(h1r) <- raster::crs(ttops1)
 
   algo <- lidR::dalponte2016(h1r, ttops1)
@@ -226,7 +227,7 @@ print(paste("seuil_dtpi = ", seuil_dtpi))
   ) %>%
     dplyr::group_by(id) %>%
     dplyr::summarise(
-      area = n(),
+      area = dplyr::n(),
       h0 = max(h0, na.rm = TRUE),
       h1 = max(h1, na.rm = TRUE),
       type = set_cat(h0, h1, 0, area, carte_renouv = FALSE)
@@ -327,29 +328,31 @@ print(paste("seuil_dtpi = ", seuil_dtpi))
       dplyr::filter(largeur > 0) %>%
       sf::st_crop(shp_ug)
 
-    dess_buff <- purrr::map(unique(desserte_ug$largeur),
-                     ~ sf::st_buffer(
-                       desserte %>% dplyr::filter(largeur == .x),
-                       .x)
-    )
-    dess_buff <- do.call(rbind, dess_buff)
+    if(nrow(desserte_ug) > 0){
 
-    ras_dess <- terra::rasterize(as(dess_buff, "SpatVector"), r_renouv, 1)
+      dess_buff <- purrr::map(unique(desserte_ug$largeur),
+                              ~ sf::st_buffer(
+                                desserte %>% dplyr::filter(largeur == .x),
+                                .x)
+      )
+      dess_buff <- do.call(rbind, dess_buff)
 
-    val_dess <- terra::values(ras_dess)[,1]
-    val_renouv <- terra::values(r_renouv)[,1]
-    val_futaie <- terra::values(r_futaie)[,1]
+      ras_dess <- terra::rasterize(as(dess_buff, "SpatVector"), r_renouv, 1)
+
+      val_dess <- terra::values(ras_dess)[,1]
+      val_renouv <- terra::values(r_renouv)[,1]
+      val_futaie <- terra::values(r_futaie)[,1]
 
 
-    val_dess[val_renouv != 1] <- NA
-    val_dess[is.na(val_renouv)] <- NA
+      val_dess[val_renouv != 1] <- NA
+      val_dess[is.na(val_renouv)] <- NA
 
-    val_renouv[val_dess == 1] <- 99
-    val_futaie[val_dess == 1] <- 99
+      val_renouv[val_dess == 1] <- 99
+      val_futaie[val_dess == 1] <- 99
 
-    terra::values(r_renouv) <- val_renouv
-    terra::values(r_futaie) <- val_futaie
-
+      terra::values(r_renouv) <- val_renouv
+      terra::values(r_futaie) <- val_futaie
+    }
   }
 
   # val_fin_types <- data.frame(cat = as.numeric(terra::values(fin))) %>%
@@ -391,16 +394,16 @@ print(paste("seuil_dtpi = ", seuil_dtpi))
   # lid_carto_evo_plot(c(r_renouv))
 
   terra::writeRaster(r_renouv,
-                     file.path(dos_projet, "tmp_evo",
+                     file.path(dos_dest,
                                paste0("renouv", paste(unique(shp_ug[[champ_id]]), collapse = "_"), ".tif")),
                      overwrite = TRUE)
 
   terra::writeRaster(r_futaie,
-                     file.path(dos_projet, "tmp_evo",
+                     file.path(dos_dest,
                                paste0("futaie", paste(unique(shp_ug[[champ_id]]), collapse = "_"), ".tif")),
                      overwrite = TRUE)
   raster::writeRaster(crowns_sans_rec,
-                      file.path(dos_projet, "tmp_evo",
+                      file.path(dos_dest,
                                 paste0("crowns", paste(unique(shp_ug[[champ_id]]), collapse = "_"), ".tif")),
                       overwrite = TRUE)
 

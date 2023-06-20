@@ -8,7 +8,7 @@
 #' @return spatial points
 #' @export
 #'
-cv_apex <- function(h, lim_h_rege, pente = .07, intercept = 2){
+cv.apex <- function(h, lim_h_rege, pente = .07, intercept = 2){
 
   hs <- terra::focal(h, w = matrix(1,3,3), fun = median, na.rm = TRUE)
 

@@ -1,0 +1,91 @@
+#' Configuration par défaut d'un projet pour le calcul du couvert
+#'
+#' @param .dir dossier du projet
+#' @param replace TRUE pour réinitialiser les paramètres
+#'
+#' @return
+#' @export
+#'
+data_conf_ini <- function(
+    .dir = mget(".dir", envir = as.environment(1), ifnotfound = list(NULL))[[1]],
+    replace = FALSE
+){
+
+  ls <- list(
+    ls_ok = c(),
+    ls_ko = c()
+  )
+
+  dc <- function(p, set, descr, origine = "externe", ls0 = ls){
+    if(!is.null(oiseauData::data_conf(p, silent = TRUE)) & ! replace){
+      ls0$ls_ko <- c(ls0$ls_ko, p)
+    }else{
+      oiseauData::data_conf(p, set = set, process = "couvert", replace = TRUE, descr = descr, origine = origine, silent = TRUE)
+      ls0$ls_ok <- c(ls0$ls_ok, p)
+    }
+    return(ls0)
+  }
+
+  ls <- dc("buffer", set = 20, descr = "distance du tampon appliqué aux limiites", origine = "user")
+  ls <- dc("dos_mns", set = file.path(.dir, "mns"), descr = "chemin du dossier de travailpour la création du MNS issu du LiDARHD IGN")
+  ls <- dc("path_mns", set = file.path(.dir, "mns", "mns.tif"), descr = "chemin du raster du MNS LiDARHD", origine = "oiseauIGN::ign_mns_lidarhd")
+  ls <- dc("path_mnh0", set = file.path(.dir, "mnh0.tif"), descr = "chemin du raster du MNH de an0 du projet", origine = "oiseauCouvert::cv_evolution")
+  ls <- dc("path_mnh1", set = file.path(.dir, "mnh1.tif"), descr = "chemin du raster du MNH de an1 du projet", origine = "oiseauCouvert::cv_evolution")
+  ls <- dc("path_mnt", set = file.path(.dir, "mnt.tif"), descr = "chemin du raster du MNT du projet", origine = "oiseauCouvert::cv_evolution")
+  ls <- dc("path_emprise_edf", set = file.path(.dir, "emprise_edf.tif"), descr = "chemin du raster des emprises des lignes électriques",
+           origine = "oiseauCouvert::cv_mask_ligne_edf")
+
+  ls <- dc("path_st", set = file.path(.dir, "st.tif"), descr = "chemin de la pile des raster climatiques, topographiques et dendrométriques", origine = "oiseauData::data_")
+
+  ls <- dc("an0", set = 2014, descr = "année du MNH0")
+  ls <- dc("an1", set = 2021, descr = "année du MNH1")
+  ls <- dc("w", set = 5, descr = "largueur de la fenêtre d'aggrégation (impaire)", origine = "user")
+
+  ls <- dc("lim_h_rege", set = 3,
+           descr = "seuil de hauteur entre les strates basse (régé) et intermédiaire (perches) - valeur suggérée: 3", origine = "user")
+  ls <- dc("lim_h_perche", set = 15,
+           descr = "seuil de hauteur entre les strates intermédiaire (perches) et haute (futaie) - valeur suggérée: 15", origine = "user")
+  ls <- dc("lim_dh_rege", set = 0.2,
+           descr ="Accroissement minimale annuel en hauteur pour qu'un pixel passant des strates basse à intermédiaire soint concidéré comme susceptible d'être régénéré (sinon, probabilité de fruticées) - valeur suggérée: 0.2", origine = "user")
+  ls <- dc("lim_dh_perche", set = 0.5,
+           descr ="seuil d'accroissement en hauteur pour juger d'une croissance forte ou faible de la strate intermédiaire - valeur suggéré: 0.5", origine = "user")
+  ls <- dc("lim_dh_futaie", set = 0.3,
+           descr ="seuil d'accroissement en hauteur pour juger d'une croissance forte ou faible de la strate supérieure - valeur suggéré: 0.3", origine = "user")
+  ls <- dc("max_acc", set = 1,
+           descr ="accroissement annuel en hauteur maximum, au-dessus duquel le différentiel de hauteur ne peut s'expliquer que par du recouvrement latéral - valeur suggérée: 1", origine = "user")
+  ls <- dc("max_area_perche", set = 50,
+           descr ="surface maximum d'une couronne de la strate intermédiaire susceptible de participer au renouvellement (au-dessus, préexistant, loup, pommier...", origine = "user")
+  ls <- dc("seuil_dtpi", set = 2,
+           descr ="différence de TPI au-delà duquel le pixel est considéré comme en fermeture latérale du couvert - valeur suggérée: 2", origine = "user")
+  ls <- dc("dos_evo", set = file.path(.dir, "evo"),
+           descr ="dossier des résulats de l'évolution du couvert")
+  ls <- dc("path_evo_futaie", set = file.path(.dir, "evo", "futaie.tif"),
+           descr ="raster 1m de l'évolution de la futaie", origine = "oiseauCouvert::cv_carto_evo_frt")
+  ls <- dc("path_evo_futaie100", set = file.path(.dir, "evo", "futaie100.tif"),
+           descr ="raster 10m de l'évolution de la futaie", origine = "oiseauCouvert::cv_carto_evo_frt")
+  ls <- dc("path_evo_renouv", set = file.path(.dir, "evo", "renouv.tif"),
+           descr ="raster 1m de l'évolution des strates inférieures", origine = "oiseauCouvert::cv_carto_evo_frt")
+  ls <- dc("path_evo_renouv100", set = file.path(.dir, "evo", "renouv100.tif"),
+           descr ="raster 10m de l'évolution des strates inférieures", origine = "oiseauCouvert::cv_carto_evo_frt")
+  ls <- dc("path_trouees_suivies", set =file.path(.dir, "troueees_suivies.tif"),
+           descr = "identifiant, surface et années d'ouverture des trouées suivies", origine = "oiseauCouvert::troues")
+  ls <- dc("min_size_trouees", set = 3,
+           descr = "surface minimale des tyrouées suivies en ares. valeur suggérée = 3", origine = "user")
+  ls <- dc("tx_ouv_trouees", set = .8,
+           descr = "taux d'ouverture minimum d'un pixel (focal = 9) pour être classé en trouée. Valeur suggérée: 0.8", origine = "user")
+
+  ls <- dc("shp_desserte", set = NULL,
+           descr = "shapefile de la desserte (classe sf)", origine = "oiseauIGN::ign_get_desserte")
+
+  ls <- dc("path_raster_dendro", set = file.path(.dir, "dendro.tif"),
+           descr = "raster des variables dendrométriques issu des modèles LiDAR ", origine = "oiseauData::data_dendro_lidar", process = "data")
+
+  if(length(ls$ls_ok) > 0){
+    message(length(ls$ls_ok), " paramètres ont été configurés par défaut: ", paste(ls$ls_ok, collapse = ", "))
+  }
+
+  if(length(ls$ls_ko) > 0){
+    message(length(ls$ls_ko), " paramètres étaient déjà configurés et n'ont  pas été modifié: ", paste(ls$ls_ko, collapse = ", "))
+  }
+
+}
