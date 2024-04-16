@@ -5,10 +5,10 @@
 #' @return table
 #' @export
 #'
-cv_volume_ans <- function(shp = oiseauData::data_conf("shp"),
-                          path_mnh = oiseauData::data_conf("path_mnh_ts"),
-                          path_mnh_mask_ts = oiseauData::data_conf("path_mnh_mask_ts"),
-                          path_emprise_edf.fac = oiseauData::data_conf("path_emprise_edf")
+data_volume_post <- function(shp = data_conf("shp"),
+                          path_mnh = data_conf("path_mnh_ts"),
+                          path_deads_ts = data_conf("path_deads_ts"),
+                          path_emprise_edf.fac = data_conf("path_emprise_edf")
                           ){
 
 
@@ -19,7 +19,7 @@ cv_volume_ans <- function(shp = oiseauData::data_conf("shp"),
                       error = function(e){r <- mnh[[1]]; terra::values(r) <- NA; r})
 
 
-  mnh_mask <- tryCatch(terra::rast(path_mnh_mask_ts),
+  mnh_mask <- tryCatch(terra::rast(path_deads_ts),
                        error = function(e){r <- mnh; terra::values(r) <- NA; r})
 
   mnh <- mnh %>% terra::mask(msk_edf, inverse = TRUE)
@@ -63,5 +63,5 @@ cv_volume_ans <- function(shp = oiseauData::data_conf("shp"),
 
   data_id %>% dplyr::select(!dplyr::starts_with("an_"))
 
-  oiseauData::data_conf("tab_volumes_ans", set = r, replace = TRUE)
+  data_conf("tab_volumes_ans", set = r, replace = TRUE)
 }

@@ -7,28 +7,28 @@
 #' @export
 #'
 
-cv_trouees <- function(min_size = oiseauData::data_conf("min_size_trouees"),
-                       txOuv = oiseauData::data_conf("tx_ouv_trouees"),
-                       path_evo_renouv = oiseauData::data_conf("path_evo_renouv"),
-                       path_mnh_mask_ts= oiseauData::data_conf("path_mnh_mask_ts"),
-                       dest_trouees_suivies = oiseauData::data_conf("dest_trouees_suivies"),
-                       an0 = oiseauData::data_conf("an0")
+cv_trouees <- function(min_size = data_conf("min_size_trouees"),
+                       txOuv = data_conf("tx_ouv_trouees"),
+                       path_evo_renouv = data_conf("path_evo_renouv"),
+                       path_deads_ts= data_conf("path_deads_ts"),
+                       dest_trouees_suivies = data_conf("path_trouees_suivies"),
+                       an0 = data_conf("an0")
                        ){
 
 
 
-  # oiseauData::data_check("min_size_trouees","tx_ouv_trouees","path_evo_renouv","path_mnh_mask_ts","shp","dest_trouees_suivies")
+  # data_check("min_size_trouees","tx_ouv_trouees","path_evo_renouv","path_deads_ts","shp","dest_trouees_suivies")
 
   # raster zones en strate régé avec année
 
   tr = terra::rast(path_evo_renouv)
-  ans = terra::rast(path_mnh_mask_ts)
+  ans = terra::rast(path_deads_ts)
   terra::crs(tr) <- terra::crs(ans) <- "epsg:2154"
   evo <- tr %>% terra::resample(ans)
   data <- c(evo, ans)
   names(data)[1] <- "evo"
 
-  types <- oiseauCouvert::cv_types_evo()
+  types <- data_typo_evo()
 
   types_ouv <- types %>% dplyr::filter(strate1 == "rege" & strate0 != "rege")
 

@@ -10,11 +10,11 @@
 #'
 cv.fct_volume <- function(
     an,
-    path_dendro = oiseauData::data_conf("path_dendro"),
-    path_mnh = oiseauData::data_conf("path_mnh_ts"),
+    path_dendro = data_conf("path_dendro"),
+    path_mnh = data_conf("path_mnh_ts"),
     fh = 10){
 
-  # oiseauData::data_check("path_dendro", "path_mnh0")
+  # data_check("path_dendro", "path_mnh0")
 
   st <- dc("path_dendro") %>% terra::rast()
   mnh0 <- terra::rast(path_mnh) %>% terra::subset(as.character(an))

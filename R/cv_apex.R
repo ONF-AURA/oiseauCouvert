@@ -20,7 +20,7 @@ cv.apex <- function(h, lim_h_rege, pente = .07, intercept = 2){
   ) %>%
     sf::as_Spatial()
 
-  raster::crs(ttops) <- raster::crs(oiseauSpot::spot_spat2rast(h))
+  raster::crs(ttops) <- raster::crs(util_spat2rast(h))
 
   ttops
 }

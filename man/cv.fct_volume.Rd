@@ -6,8 +6,8 @@
 \usage{
 cv.fct_volume(
   an,
-  path_dendro = oiseauData::data_conf("path_dendro"),
-  path_mnh = oiseauData::data_conf("path_mnh_ts"),
+  path_dendro = data_conf("path_dendro"),
+  path_mnh = data_conf("path_mnh_ts"),
   fh = 10
 )
 }

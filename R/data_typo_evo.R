@@ -3,7 +3,7 @@
 #' @return table
 #' @export
 #'
-cv_types_evo <- function(){
+data_typo_evo <- function(){
 
 
   read.csv2(system.file("types.csv", package = "oiseauCouvert"),

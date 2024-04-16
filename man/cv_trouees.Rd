@@ -5,12 +5,12 @@
 \title{Identification des trouées à suivre}
 \usage{
 cv_trouees(
-  min_size = oiseauData::data_conf("min_size_trouees"),
-  txOuv = oiseauData::data_conf("tx_ouv_trouees"),
-  path_evo_renouv = oiseauData::data_conf("path_evo_renouv"),
-  path_mnh_mask_ts = oiseauData::data_conf("path_mnh_mask_ts"),
-  dest_trouees_suivies = oiseauData::data_conf("dest_trouees_suivies"),
-  an0 = oiseauData::data_conf("an0")
+  min_size = data_conf("min_size_trouees"),
+  txOuv = data_conf("tx_ouv_trouees"),
+  path_evo_renouv = data_conf("path_evo_renouv"),
+  path_deads_ts = data_conf("path_deads_ts"),
+  dest_trouees_suivies = data_conf("path_trouees_suivies"),
+  an0 = data_conf("an0")
 )
 }
 \arguments{

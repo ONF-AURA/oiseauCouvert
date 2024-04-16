@@ -11,7 +11,7 @@
 cv.color_evo <- function(r, plot = TRUE, shp = NULL){
   r <- terra::as.factor(r)
 
-  cats <- cv_types_evo() %>% dplyr::select(cat, description, col) %>%
+  cats <- data_typo_evo() %>% dplyr::select(cat, description, col) %>%
     dplyr::rename(ID = cat, category = description) %>%
     dplyr::mutate(category = stringr::str_replace_all(category, " ", "."),
                   category = paste(ID, category, sep = "."))

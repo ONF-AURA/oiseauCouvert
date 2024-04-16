@@ -1,6 +1,6 @@
 #' Raster Insolation au 15/07
 #'
-#' @param dem MNE = MNT + MNH
+#' @param mne MNE = MNT + MNH
 #'
 #' @return raster
 #' @export
@@ -8,31 +8,31 @@
 #' @import insol
 #'
 
-cv.sun <- function(dem){
+cv.sun <- function(mne, month = 7){
 
   # dem <- lid_spat2rast(mnt + mnh1)
 
-cgr <- cgrad(dem)
-demm <- raster:::as.matrix(dem)
-dl <- raster::res(dem)[1]
+cgr <- insol::cgrad(mne)
+demm <- raster::as.matrix(mne)
+dl <- raster::res(mne)[1]
 
 ## Isolation at 2 h interval over the length of the day
 ## RH and temp would cahnge over the dy, here we use a constant value for simplicity
 
-height <- raster::quantile(dem, .5, na.rm = TRUE)
+height <- raster::quantile(mne, .5, na.rm = TRUE)
 visibility <- 30
 RH <- 80
 tempK <- 288
 tmz <- 0
 year <- 2022
-month <- 7
+# month <- 7
 day <- 21
 timeh <- 12
 jd <- insol::JDymd(year,month,day,hour = timeh)
 Iglobal <- array(0,dim = dim(demm))
 deltat <- 2 #heures
 
-coo  <-  sf::st_point(apply(raster::bbox(dem), 1, mean)) %>%
+coo  <-  sf::st_point(apply(raster::bbox(mne), 1, mean)) %>%
   sf::st_sfc(crs = 2154) %>%
   sf::st_transform(4326) %>% sf::st_coordinates()
 
@@ -56,8 +56,8 @@ for (srs in seq(dayl[1],dayl[2],deltat)){
 
 
 ## rasterize to plot nicely
- Iglobal <- raster::raster(Iglobal,crs = raster::projection(dem))
- raster::extent(Iglobal) <- raster::extent(dem)
+ Iglobal <- raster::raster(Iglobal,crs = raster::projection(mne))
+ raster::extent(Iglobal) <- raster::extent(mne)
 
  Iglobal
 

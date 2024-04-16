@@ -4,10 +4,10 @@
 \alias{cv.sun}
 \title{Raster Insolation au 15/07}
 \usage{
-cv.sun(dem)
+cv.sun(mne, month = 7)
 }
 \arguments{
-\item{dem}{MNE = MNT + MNH}
+\item{mne}{MNE = MNT + MNH}
 }
 \value{
 raster

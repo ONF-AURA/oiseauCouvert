@@ -5,11 +5,14 @@
 \title{Insolation reçue à la hauteur du seuil de la strate basse}
 \usage{
 cv_insolation(
-  dos_proj = oiseauData::data_conf("dos_projet"),
-  path_mnt = oiseauData::data_conf("path_mnt"),
-  path_mnh = oiseauData::data_conf("path_mnh_ts"),
-  shp = oiseauData::data_conf("shp"),
-  lim_h_rege = oiseauData::data_conf("lim_h_rege")
+  dos_proj = data_conf("dos_projet"),
+  path_mnt = data_conf("path_mnt"),
+  path_mnh = data_conf("path_mnh_ts"),
+  shp = data_conf("shp"),
+  lim_h_rege = data_conf("lim_h_rege"),
+  dest_insol = data_conf("path_insolation_ts"),
+  resolution = 10,
+  force = FALSE
 )
 }
 \arguments{

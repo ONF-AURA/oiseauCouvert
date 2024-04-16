@@ -28,7 +28,8 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
                          seuil_dtpi = 2,
                          desserte = NULL,
                          champ_id,
-                         dos_dest){
+                         dos_dest,
+                         id_dest){
 
   print(paste("seuil_dtpi = ", seuil_dtpi))
   h.temp <- terra::crop(mnh0, as(shp_ug, "SpatVector"))
@@ -46,7 +47,7 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   dif_tpi[is.na(dif_tpi)] <- 0
 
-  types <- cv_types_evo()
+  types <- data_typo_evo()
 
   # fonction de détermination de la catégorie ------------------------------------
 
@@ -206,7 +207,7 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
   # véritables houppiers avec valeur des houppiers tronqués
 
   h1r <- h1
-  h1r <- oiseauUtil::util_spat2rast(h1)
+  h1r <- util_spat2rast(h1)
   raster::crs(h1r) <- raster::crs(ttops1)
 
   algo <- lidR::dalponte2016(h1r, ttops1)
@@ -222,8 +223,8 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   type_crowns <- data.frame(
     id = raster::values(crowns_sans_rec),
-    h0 = raster::values(h0 %>% oiseauSpot::spot_spat2rast()),
-    h1 = raster::values(h1 %>% oiseauSpot::spot_spat2rast())
+    h0 = raster::values(h0 %>% util_spat2rast()),
+    h1 = raster::values(h1 %>% util_spat2rast())
   ) %>%
     dplyr::group_by(id) %>%
     dplyr::summarise(
@@ -241,7 +242,7 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
   crowns_raster_0 <-  raster::as.factor(crowns_id)
   raster::values(crowns_raster_0) <- val_raster_crowns %>% dplyr::pull(type)
 
-  r_futaie <- terra::focal(terra::rast(crowns_raster_0), 3, "modal") %>% terra::as.factor()
+  r_futaie <- terra::focal(terra::rast(crowns_raster_0), 3, "modal", na.rm = TRUE) %>% terra::as.factor()
 
 
 
@@ -312,7 +313,7 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   terra::values(r_futaie) <- val_futaie
 
-  r_futaie <- terra::focal(r_futaie, 5, "modal")
+  r_futaie <- terra::focal(r_futaie, 5, "modal", na.rm = TRUE)
 
   # 4.masque desserte
 
@@ -395,16 +396,16 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   terra::writeRaster(r_renouv,
                      file.path(dos_dest,
-                               paste0("renouv", paste(unique(shp_ug[[champ_id]]), collapse = "_"), ".tif")),
+                               paste0("renouv", id_dest, ".tif")),
                      overwrite = TRUE)
 
   terra::writeRaster(r_futaie,
                      file.path(dos_dest,
-                               paste0("futaie", paste(unique(shp_ug[[champ_id]]), collapse = "_"), ".tif")),
+                               paste0("futaie", id_dest, ".tif")),
                      overwrite = TRUE)
   raster::writeRaster(crowns_sans_rec,
                       file.path(dos_dest,
-                                paste0("crowns", paste(unique(shp_ug[[champ_id]]), collapse = "_"), ".tif")),
+                                paste0("crowns", id_dest, ".tif")),
                       overwrite = TRUE)
 
 }
