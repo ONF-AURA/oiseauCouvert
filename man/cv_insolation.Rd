@@ -12,7 +12,8 @@ cv_insolation(
   lim_h_rege = data_conf("lim_h_rege"),
   dest_insol = data_conf("path_insolation_ts"),
   resolution = 10,
-  force = FALSE
+  force = FALSE,
+  info = FALSE
 )
 }
 \arguments{

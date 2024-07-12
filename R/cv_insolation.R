@@ -14,7 +14,7 @@ cv_insolation <- function(dos_proj = data_conf("dos_projet"),
                           lim_h_rege = data_conf("lim_h_rege"),
                           dest_insol = data_conf("path_insolation_ts"),
                           resolution = 10,
-                          force = FALSE){
+                          force = FALSE, info = FALSE){    if(info) return(data_info(dest))   
 
 
   if(file.exists(dest_insol) & ! force){

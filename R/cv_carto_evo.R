@@ -206,12 +206,14 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   # véritables houppiers avec valeur des houppiers tronqués
 
-  h1r <- h1
-  h1r <- util_spat2rast(h1)
-  raster::crs(h1r) <- raster::crs(ttops1)
+  # h1r <- h1
+  # h1r <- util_spat2rast(h1)
+  # raster::crs(h1r) <- raster::crs(ttops1)
+  #
+  # algo <- lidR::dalponte2016(h1r, ttops1)
+  # crowns_id<- algo()
 
-  algo <- lidR::dalponte2016(h1r, ttops1)
-  crowns_id<- algo()
+  crowns_id <- data_crowns()
 
   # suppression des pixels de recouvrement
 
