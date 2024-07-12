@@ -244,7 +244,7 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
   crowns_raster_0 <-  raster::as.factor(crowns_id)
   raster::values(crowns_raster_0) <- val_raster_crowns %>% dplyr::pull(type)
 
-  r_futaie <- terra::focal(terra::rast(crowns_raster_0), 3, "modal", na.rm = TRUE) %>% terra::as.factor()
+  r_futaie <- terra::focal(crowns_raster_0, 3, "modal", na.rm = TRUE) %>% terra::as.factor()
 
 
 
