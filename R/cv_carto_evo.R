@@ -213,7 +213,7 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
   # algo <- lidR::dalponte2016(h1r, ttops1)
   # crowns_id<- algo()
 
-  crowns_id <- data_crowns()
+  crowns_id <- data_crowns() %>% crop(h1)
 
   # suppression des pixels de recouvrement
 
