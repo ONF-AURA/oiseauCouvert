@@ -3,6 +3,7 @@
 #' @param shp_ug polygone sf
 #' @param mnh0 mnh an 0
 #' @param mnh1 mnh an 1
+#' @param crowns couronnes des années 0 et 1
 #' @param an0 année premier mnh
 #' @param an1 année second mnh
 #' @param lim_h_rege seuil hauteur catégorie régénération
@@ -20,7 +21,7 @@
 #' @return liste: raster et table
 #' @export
 #'
-cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
+cv.carto_evo <- function(shp_ug, mnh0, mnh1, crowns, an0, an1,
                          lim_h_rege = 3, lim_h_perche = 15,
                          lim_dh_rege = 0.2, lim_dh_perche = 0.5, lim_dh_futaie = 0.3,
                          max_acc = 1,
@@ -170,50 +171,9 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   print("2.houppiers")
 
-  ttops1 <- cv.apex(h1, lim_h_rege)
 
-
-  # suppression des pixels de recouvrements (leur hauteur biaise la moyenne)
-
-  # cat_recou <- types %>% filter(futaie_fill_renouv ==0) %>% pull(cat)
-  # h1_nc <- h1
-  #
-  # values(h1_nc)[values(r_renouv_ini) %in% cat_recou] <- values(h0)[values(r_renouv_ini) %in% cat_recou]
-  #
-  # h1r_nc <- lid_spat2rast(h1_nc)
-  # crs(h1r_nc) <- crs(ttops1)
-  #
-  # algo_nc <- lidR::dalponte2016(h1r_nc, ttops1)
-  # crowns1_nc <- algo_nc()
-  #
-  #
-  # crowns_nc <- suppressWarnings(
-  #   st_as_stars(crowns1_nc) %>%
-  #     st_as_sf(as_points = FALSE, merge = TRUE) %>%
-  #     mutate(h1 = ttops1$Z,
-  #            h0 = terra::extract(h0, as(ttops1, "SpatVector"))[[2]],
-  #            dtpi = terra::extract(
-  #              as(dif_tpi, "SpatRaster"),
-  #              as(ttops1, "SpatVector")
-  #            )[[2]],
-  #            area = st_area(.) %>% as.numeric(),
-  #            type = set_cat(h0, h1, dtpi, area, carte_renouv = FALSE)
-  #     )
-  # )
-  #
-  # cr_nc <- terra::rasterize(as(crowns_nc, "SpatVector"), r_renouv_ini, "type")
-  #
-
-  # véritables houppiers avec valeur des houppiers tronqués
-
-  # h1r <- h1
-  # h1r <- util_spat2rast(h1)
-  # raster::crs(h1r) <- raster::crs(ttops1)
-  #
-  # algo <- lidR::dalponte2016(h1r, ttops1)
-  # crowns_id<- algo()
-
-  crowns_id <- data_crowns() %>% crop(h1)
+  # couronnes de an1 utilisées
+  crowns_id <- crowns[[2]] %>% crop(h1)
 
   # suppression des pixels de recouvrement
 
@@ -223,29 +183,35 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   # caracteristiques des houppiers
 
-  type_crowns <- data.frame(
-    id = raster::values(crowns_sans_rec),
-    h0 = raster::values(h0 %>% util_spat2rast()),
-    h1 = raster::values(h1 %>% util_spat2rast())
-  ) %>%
-    dplyr::group_by(id) %>%
+  type_crowns_pile <- c(crowns_sans_rec, h0, h1)
+  names(type_crowns_pile) <- c("id", "h0", "h1")
+
+  type_crowns_tab <- type_crowns_pile %>% as.data.frame(cells = TRUE)
+
+  type_crowns <- type_crowns_tab %>% dplyr::group_by(id) %>%
     dplyr::summarise(
       area = dplyr::n(),
       h0 = max(h0, na.rm = TRUE),
       h1 = max(h1, na.rm = TRUE),
       type = set_cat(h0, h1, 0, area, carte_renouv = FALSE)
     )
-  val_raster_crowns <- data.frame(
-    id = raster::values(crowns_id)
-  ) %>% dplyr::left_join(type_crowns) %>%
-    dplyr::mutate(type = ifelse(is.na(id), as.numeric(NA), type))
+
+  dj <- left_join(type_crowns_tab %>% select(id, cell),
+                  type_crowns %>% select(id, type))
+  vrc <- util_cells2raster(h0, dj$cell, dj$type)
 
 
-  crowns_raster_0 <-  raster::as.factor(crowns_id)
-  raster::values(crowns_raster_0) <- val_raster_crowns %>% dplyr::pull(type)
+  levels(vrc) <- data.frame(id=types$cat, label=types$cat)
 
-  r_futaie <- terra::focal(crowns_raster_0, 3, "modal", na.rm = TRUE) %>% terra::as.factor()
+  coltab(vrc) <- types %>% select(cat, col)
+  vrc <- util_rename_spatrast(vrc, "futaie")
 
+  crowns_raster_0 <-  vrc
+
+  r_futaie <- terra::focal(crowns_raster_0, 3, "modal", na.rm = TRUE)
+  levels(r_futaie) <- levels(vrc)
+  coltab(r_futaie) <- coltab(vrc)
+  r_futaie <- util_rename_spatrast(r_futaie, "futaie")
 
 
   # 3. corrections -------------------------------------
@@ -381,20 +347,7 @@ cv.carto_evo <- function(shp_ug, mnh0, mnh1, an0, an1,
 
   # 6- FOCAL
 
-  # renouv_rege <- r_renouv
-  # renouv_rege[renouv_rege %in% c(10,20)] <- NA
-  # renouv_rege <- terra::focal(renouv_rege, 5, "modal")
-  # renouv_rege[is.na(renouv_rege)] <- 0
-  #
-  # renouv_futaie <- r_renouv
-  # renouv_futaie[! renouv_futaie %in% c(10,20)] <- NA
-  # renouv_futaie <- terra::focal(renouv_futaie, 5, "modal")
-  # renouv_futaie[is.na(renouv_futaie) | renouv_rege != 0] <- 0
-  #
-  # r_renouv <- renouv_rege + renouv_futaie
-  # r_renouv[r_renouv == 0] <- NA
-  #
-  # lid_carto_evo_plot(c(r_renouv))
+
 
   terra::writeRaster(r_renouv,
                      file.path(dos_dest,

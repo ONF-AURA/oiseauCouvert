@@ -8,6 +8,7 @@ cv.carto_evo(
   shp_ug,
   mnh0,
   mnh1,
+  crowns,
   an0,
   an1,
   lim_h_rege = 3,
@@ -30,6 +31,8 @@ cv.carto_evo(
 \item{mnh0}{mnh an 0}
 
 \item{mnh1}{mnh an 1}
+
+\item{crowns}{couronnes des années 0 et 1}
 
 \item{an0}{année premier mnh}
 
